@@ -105,6 +105,19 @@ def get_mayors_for_state(state):
             continue
 
 
+# Function to decode obfuscated email addresses (Cloudflare protection)
+def decode_email(obfuscated_email):
+    if not obfuscated_email.startswith("/cdn-cgi/l/email-protection#"):
+        return obfuscated_email  # Return as-is if it's not obfuscated
+
+    encoded = obfuscated_email.split('#')[-1]
+    key = int(encoded[:2], 16)  
+    decoded = ''.join(
+        chr(int(encoded[i:i+2], 16) ^ key)  
+        for i in range(2, len(encoded), 2)
+    )
+    return decoded
+
 def _get_mayor_from_table(node):
     # Text example:
     # 1 Ethan Berkowitz
@@ -149,7 +162,7 @@ def _get_mayor_from_table(node):
     mayor_data["bio_url"] = next(links)
 
     mayor_data["phone"] = next(links).replace("tel:", "")
-    mayor_data["email"] = next(links).replace("mailto:", "")
+    mayor_data["email"] = decode_email(next(links).replace("mailto:", ""))
     return mayor_data
 
 
